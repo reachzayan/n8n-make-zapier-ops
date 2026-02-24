@@ -1,0 +1,36 @@
+# --- Secrets & credentials (never commit) ---
+.env
+.env.*
+*.env
+*.local
+credentials.json
+credentials*.json
+*.credentials.json
+client_secret*.json
+service-account*.json
+token.json
+*.token.json
+*token*.pickle
+*.pem
+*.key
+*.p12
+*.pfx
+oauth*.json
+gha-creds-*.json
+
+# --- Node / build artifacts ---
+node_modules/
+dist/
+build/
+.cache/
+*.log
+
+# --- OS / editor junk ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.vscode/
+.idea/
