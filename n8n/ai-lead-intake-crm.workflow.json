@@ -1,0 +1,901 @@
+{
+  "name": "AI Lead Intake CRM — V1 Working Baseline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "<WEBHOOK_PATH>",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6d1df008-f367-4208-8391-77a6475e22ba",
+      "name": "Receive Lead Webhook",
+      "webhookId": "<N8N_WEBHOOK_ID>"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "77625662-6464-4e86-904d-defd76bb0672",
+              "name": "lead_name",
+              "value": "={{ ($json.body?.name || \"\").trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "7ec20c54-70ec-4a44-a889-229394e22e73",
+              "name": "lead_email",
+              "value": "={{ ($json.body?.email || \"\").trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "b333b037-cc24-42b1-8405-c082b0e6476d",
+              "name": "lead_phone",
+              "value": "={{ ($json.body?.phone || \"\").trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "06b84478-1f00-4f4b-8b62-f422bfb35abe",
+              "name": "lead_business_type",
+              "value": "={{ ($json.body?.business_type || \"\").trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "dbaff3cc-52a9-4969-b699-0cd58eb63c42",
+              "name": "lead_city",
+              "value": "={{ ($json.body?.city || \"\").trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "28c4ee9b-c34e-404a-a00b-8bc4e31c9a2e",
+              "name": "lead_message",
+              "value": "={{ ($json.body?.message || \"\").trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "32fefdff-1ea7-4cb3-be7a-d3b4cda50502",
+      "name": "Normalize Lead Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ab6910b2-0ccd-43fd-b99d-eea1bdc56f69",
+              "leftValue": "={{ $json.lead_email || \"\" }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "0e798ce7-1241-4c17-bbca-b724f0f54ea1",
+      "name": " Validate Email Exists"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "<AIRTABLE_BASE_ID>",
+          "mode": "list",
+          "cachedResultName": "AI Lead CRM",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>"
+        },
+        "table": {
+          "__rl": true,
+          "value": "<AIRTABLE_TABLE_LEADS_CLEAN>",
+          "mode": "list",
+          "cachedResultName": "Leads_clean",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>/<AIRTABLE_TABLE_LEADS_CLEAN>"
+        },
+        "filterByFormula": "={{ \"{Email} = '\" + $json.lead_email + \"'\" }}",
+        "returnAll": false,
+        "limit": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        -176
+      ],
+      "id": "bd1d3aeb-d918-4421-94c7-747cf63168fb",
+      "name": "Search Existing Lead by Email",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "<N8N_CREDENTIAL_ID>",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "00149591-17b1-4253-8f5f-1215931b33dc",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        768,
+        -176
+      ],
+      "id": "a466215f-f027-497b-9062-acca502f57c4",
+      "name": "Check Duplicate Found"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "<AIRTABLE_BASE_ID>",
+          "mode": "list",
+          "cachedResultName": "AI Lead CRM",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>"
+        },
+        "table": {
+          "__rl": true,
+          "value": "<AIRTABLE_TABLE_LEADS_CLEAN>",
+          "mode": "list",
+          "cachedResultName": "Leads_clean",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>/<AIRTABLE_TABLE_LEADS_CLEAN>"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Normalize Lead Data').first().json.lead_name }}",
+            "Email": "={{ $('Normalize Lead Data').first().json.lead_email }}",
+            "Phone": "={{ $('Normalize Lead Data').first().json.lead_phone }}",
+            "Business Category": "={{ $('Normalize Lead Data').first().json.lead_business_type }}",
+            "City": "={{ $('Normalize Lead Data').first().json.lead_city }}",
+            "Message": "={{ $('Normalize Lead Data').first().json.lead_message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Business Category",
+              "displayName": "Business Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        16
+      ],
+      "id": "945af95e-cd02-4cbd-871a-c0a015c08dce",
+      "name": "Create Lead in Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "<N8N_CREDENTIAL_ID>",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"duplicate\",\n  \"message\": \"Lead already exists\",\n  \"email\": \"{{ $('Normalize Lead Data').item.json.lead_email }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1088,
+        -448
+      ],
+      "id": "a9e06c8d-9643-401e-9a92-895b53f4b28e",
+      "name": "Respond Duplicate Lead"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Lead created\",\n  \"email\": \"{{ $('Normalize Lead Data').first().json.lead_email }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1440,
+        16
+      ],
+      "id": "64c6953c-c652-4d7f-839f-0471e8a4d815",
+      "name": "Respond Success"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "<AIRTABLE_BASE_ID>",
+          "mode": "list",
+          "cachedResultName": "AI Lead CRM",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>"
+        },
+        "table": {
+          "__rl": true,
+          "value": "<AIRTABLE_TABLE_AUTOMATION_LOGS>",
+          "mode": "list",
+          "cachedResultName": "Automation_Logs",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>/<AIRTABLE_TABLE_AUTOMATION_LOGS>"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "error",
+            "Email": "missing",
+            "Name": "={{ $('Normalize Lead Data').first().json.lead_name }}",
+            "Event Type": "missing_email",
+            "Message": "Email is required",
+            "Source": "webhook"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Event Type",
+              "displayName": "Event Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        288
+      ],
+      "id": "52a91c88-8a1c-4c45-8118-71b6592a77a5",
+      "name": "Log Missing Email",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "<N8N_CREDENTIAL_ID>",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "<AIRTABLE_BASE_ID>",
+          "mode": "list",
+          "cachedResultName": "AI Lead CRM",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>"
+        },
+        "table": {
+          "__rl": true,
+          "value": "<AIRTABLE_TABLE_AUTOMATION_LOGS>",
+          "mode": "list",
+          "cachedResultName": "Automation_Logs",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>/<AIRTABLE_TABLE_AUTOMATION_LOGS>"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "duplicate",
+            "Email": "={{ $('Normalize Lead Data').first().json.lead_email }}",
+            "Name": "={{ $('Normalize Lead Data').first().json.lead_name }}",
+            "Event Type": "duplicate_lead",
+            "Message": "Lead already exists",
+            "Source": "webhook"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Event Type",
+              "displayName": "Event Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -448
+      ],
+      "id": "cb42fd47-4801-412c-ace0-d7b6640bd81c",
+      "name": "Log Duplicate Lead",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "<N8N_CREDENTIAL_ID>",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "<AIRTABLE_BASE_ID>",
+          "mode": "list",
+          "cachedResultName": "AI Lead CRM",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>"
+        },
+        "table": {
+          "__rl": true,
+          "value": "<AIRTABLE_TABLE_AUTOMATION_LOGS>",
+          "mode": "list",
+          "cachedResultName": "Automation_Logs",
+          "cachedResultUrl": "https://airtable.com/<AIRTABLE_BASE_ID>/<AIRTABLE_TABLE_AUTOMATION_LOGS>"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "success",
+            "Email": "={{ $('Normalize Lead Data').first().json.lead_email }}",
+            "Name": "={{ $('Normalize Lead Data').first().json.lead_name }}",
+            "Event Type": "lead_created",
+            "Message": "Lead created successfully",
+            "Source": "webhook"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Event Type",
+              "displayName": "Event Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        16
+      ],
+      "id": "018dc86b-c30f-44d6-b213-a4483ceba069",
+      "name": "Log Successful Lead Creation",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "<N8N_CREDENTIAL_ID>",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "<TELEGRAM_CHAT_ID>",
+        "text": "=🚨 New Lead Created  Name: {{ $('Normalize Lead Data').first().json.lead_name }} Email: {{ $('Normalize Lead Data').first().json.lead_email }} Phone: {{ $('Normalize Lead Data').first().json.lead_phone }} Business: {{ $('Normalize Lead Data').first().json.lead_business_type }} City: {{ $('Normalize Lead Data').first().json.lead_city }}  Message: {{ $('Normalize Lead Data').first().json.lead_message }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1248,
+        16
+      ],
+      "id": "598f7ecc-fd1e-475e-916e-ea043d25c021",
+      "name": "Notify New Lead via Telegram",
+      "webhookId": "<N8N_WEBHOOK_ID>",
+      "credentials": {
+        "telegramApi": {
+          "id": "<N8N_CREDENTIAL_ID>",
+          "name": "Telegram Lead Notification Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"error\",\n  \"message\": \"Email is required\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        704,
+        288
+      ],
+      "id": "9aee93d6-7bd7-4361-b4be-9de4a425aa9e",
+      "name": "Respond Validation Error"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead Data": {
+      "main": [
+        [
+          {
+            "node": " Validate Email Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Validate Email Exists": {
+      "main": [
+        [
+          {
+            "node": "Search Existing Lead by Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Missing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Existing Lead by Email": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Found": {
+      "main": [
+        [
+          {
+            "node": "Log Duplicate Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Lead in Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Lead in Airtable": {
+      "main": [
+        [
+          {
+            "node": "Log Successful Lead Creation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Missing Email": {
+      "main": [
+        [
+          {
+            "node": "Respond Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Duplicate Lead": {
+      "main": [
+        [
+          {
+            "node": "Respond Duplicate Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Successful Lead Creation": {
+      "main": [
+        [
+          {
+            "node": "Notify New Lead via Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify New Lead via Telegram": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "rUbA07L7YJm2d0gl",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "14d06700-fc36-427e-b5c1-c8c7492be4a0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "<N8N_INSTANCE_ID>"
+  },
+  "id": "l52ZLdcrbt8u5WO1",
+  "tags": []
+}
