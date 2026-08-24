@@ -50,6 +50,10 @@ This repository collects three no-/low-code backend automations built on **n8n**
 ---
 
 
+## Portfolio note
+
+Sanitized exports and case studies are intended for portfolio review.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
