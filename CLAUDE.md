@@ -18,3 +18,5 @@ Public portfolio repo of three backend automation systems. Audience: recruiters 
 - Single repo: n8n-make-zapier-ops. Concise imperative commit messages.
 - .gitignore must ignore .env, credentials/token files, node_modules, OS files.
 - Push PRIVATE first; owner reviews, then flips to public manually.
+
+Last reviewed: 2026-08-24
